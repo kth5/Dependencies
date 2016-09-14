@@ -7,7 +7,7 @@ ranlib=$(host)-ranlib
 build=i686-linux-gnu
 
 # How many source files to build in parallel within each package
-jobs=-j1
+jobs=-j2
 
 # Source and binary directories
 src=/src
@@ -22,8 +22,6 @@ include ../makefile.common
 
 # ovveride some versions for windows
 gettext=gettext-0.18.3.2
-gpod=libgpod-0.8.0.3
-gpodtgz=$(downloads)/$(gpod).tar.gz
 
 # List of dlls that get included in the final package for Clementine
 clementine_dlls=glew32.dll \
@@ -211,6 +209,10 @@ clementine-deps: clementine-build-deps clementine-gst-plugins openssl glibnetwor
 
 # The actual commands for compiling each package follow
 
+.done-system:
+	cp /usr/lib/gcc/i686-w64-mingw32/5.3-win32/*.dll $(prefix)/bin
+	touch $@
+
 .done-qjson: .done-qt
 	$(call extractpkg,$(qjsontgz))
 	cd $(qjson) && patch -p0 < ../patches/qjson-01-pkgconfig.patch
@@ -306,8 +308,12 @@ clementine-deps: clementine-build-deps clementine-gst-plugins openssl glibnetwor
 
 .done-sqlite:
 	$(call extractpkg,$(sqlitetgz),$(sqlite))
-	(cd $(sqlite) && $(configure) && $(make))
-	$(call installpkg,$(sqlite))
+	cd $(sqlite) && $(configure) --disable-static --enable-shared 
+	cd $(sqlite) && $(make) install DESTDIR=$(stow)/$(sqlite) 
+	#cd $(sqlite) && $(cc) -shared sqlite3.c -o sqlite3.dll 
+	#cd $(sqlite) && install -m755 -D sqlite3.dll $(stow)/$(sqlite)/bin/libsqlite3-0.dll
+	cd $(stow) && stow -R $(sqlite)
+	touch $@
 
 .done-libxml: .done-iconv
 	$(call extractpkg,$(xmltgz))
@@ -336,7 +342,11 @@ clementine-deps: clementine-build-deps clementine-gst-plugins openssl glibnetwor
 	touch $@
 
 .done-libgpod: .done-sqlite .done-libplist .done-glib
-	$(call extractandbuildcmake,$(gpodtgz),$(gpod))
+	$(call extractpkg,$(gpodtgz))
+	cd $(gpod) && $(configure) --enable-shared --disable-static
+	cd $(gpod)/src && $(make) install DESTDIR=$(stow)/$(gpod)
+	cd $(stow) && stow $(gpod)
+	touch $@
 
 .done-gstreamer: .done-glib .done-libxml .done-orc
 	$(call extractpkg,$(gsttgz))
@@ -472,7 +482,7 @@ clementine-deps: clementine-build-deps clementine-gst-plugins openssl glibnetwor
 
 .done-lame:
 	$(call extractpkg,$(lametgz),$(lame))
-	cd $(lame) && patch -p1 < ../patches/lame-01-no-sse2.patch
+	cd $(lame) && patch -Np0 -i ../patches/lame-01-disable-sse.patch
 	cd $(lame) && autoconf
 	cd $(lame) && $(configure) --disable-frontend --disable-cpml
 	#cd $(lame) && $(make) -f Makefile.unix UNAME='MSDOS' NOUNIXCMD=NO HAVE_NASM=NO \
@@ -567,7 +577,7 @@ clementine-deps: clementine-build-deps clementine-gst-plugins openssl glibnetwor
 
 .done-dlfcn:
 	-mkdir $(stow)/$(dlfcn)/
-	tar -xjf $(dlfcntgz) -C $(stow)/$(dlfcn)/
+	tar -xzf $(dlfcntgz) -C $(stow)/$(dlfcn)/
 	cd $(stow) && stow -R $(dlfcn)
 	touch $@
 
@@ -604,20 +614,24 @@ clementine-deps: clementine-build-deps clementine-gst-plugins openssl glibnetwor
 	patch -d $(qt) -p0 < patches/qt-01-codecs.patch
 	patch -d $(qt) -p0 < patches/qt-02-dir.patch
 	patch -d $(qt) -p1 < patches/qt-03-disable-sslv3.patch
-	#patch -d $(qt) -p1 < patches/qt-04-widget.patch
+	patch -d $(qt) -p1 < patches/qt-04-moc-boost.patch
+	patch -d $(qt) -p0 < patches/qt-05-qclipboard.patch
+	patch -d $(qt) -p1 < patches/qt-06-glib-honor-ExcludeSocketNotifiers-flag.patch 
+	patch -d $(qt) -p1 < patches/qt-07-webkit-widgets.patch
 	cd $(qt) && OPENSSL_LIBS="-llibeay32 -lssleay32" ./configure \
 		-opensource -confirm-license \
 		-platform linux-g++-32 \
 		-xplatform win32-g++ -device-option CROSS_COMPILE=i686-w64-mingw32- \
 		-prefix $(stow)/$(qt) \
-		-no-phonon -no-webkit -no-xmlpatterns -no-qt3support \
+		-no-phonon -no-xmlpatterns -no-qt3support \
 		-no-declarative -no-audio-backend \
 		-no-script -no-scripttools \
 		-nomake demos -nomake examples \
 		-nomake docs -no-exceptions \
 		-system-sqlite \
-		-qt-sql-sqlite \
-		-openssl-linked
+		-openssl-linked \
+		-webkit \
+		-release
 	cd $(qt) && $(make)
 	cd $(qt) && make install
 	mv -fv $(stow)/$(qt)/lib/*.dll $(stow)/$(qt)/bin/
@@ -702,18 +716,18 @@ clementine-deps: clementine-build-deps clementine-gst-plugins openssl glibnetwor
 	cd $(stow) && stow $(archive)
 	touch $@
 
-.done-protobuf:
+.done-protobuf: .done-system
 	# Compile a host version first for protoc
-	$(call extractpkg,$(protobuftgz))
-	-cd $(protobuf) && make clean
-	cd $(protobuf) && ./configure --prefix=$(prefix)
-	cd $(protobuf) && $(make)
-	cd $(protobuf) && make install
-	-rm -fv $(prefix)/lib/libproto*.la
-	-rm -fv $(prefix)/lib/libproto*.a
-	-rm -rfv $(prefix)/include/google
-	-rm -rf $(prefix)/lib/pkgconfig/protobuf*.pc
-	cd $(protobuf) && make clean
+	#$(call extractpkg,$(protobuftgz))
+	#-cd $(protobuf) && make clean
+	#cd $(protobuf) && $(configure)
+	#cd $(protobuf) && $(make)
+	#cd $(protobuf) && make install
+	#-rm -fv $(prefix)/lib/libproto*.la
+	#-rm -fv $(prefix)/lib/libproto*.a
+	#-rm -rfv $(prefix)/include/google
+	#-rm -rf $(prefix)/lib/pkgconfig/protobuf*.pc
+	#cd $(protobuf) && make clean
 
 	# Now do the target build
 	$(call extractandbuild,$(protobuftgz),$(protobuf))
