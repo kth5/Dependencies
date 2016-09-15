@@ -147,7 +147,7 @@ pkgconfig=PKG_CONFIG_LIBDIR=$(prefix)/lib/pkgconfig
 autoconf=ACLOCAL_PATH=$(prefix)/share/aclocal:/usr/share/aclocal
 ldflags=-L$(prefix)/lib
 # -O2 is required to work around link errors in gettext
-cflags=-I$(prefix)/include -O2
+cflags=-I$(prefix)/include -O2 -march=i686 -mtune=i686
 cxxflags=$(cflags)
 configure=$(pkgconfig) LDFLAGS=$(ldflags) CFLAGS="$(cflags)" CXXFLAGS="$(cxxflags)" ./configure --host=$(host) --build=$(build) --prefix=$(prefix)
 cmake=$(pkgconfig) cmake .. -DCMAKE_TOOLCHAIN_FILE=$(src)/Toolchain-mingw32.cmake -DCMAKE_INSTALL_PREFIX=$(prefix) -DCMAKE_C_FLAGS="$(cflags)" -DCMAKE_CXX_FLAGS="$(cxxflags)"
@@ -310,8 +310,9 @@ clementine-deps: clementine-build-deps clementine-gst-plugins openssl glibnetwor
 	$(call extractpkg,$(sqlitetgz),$(sqlite))
 	cd $(sqlite) && $(configure) --disable-static --enable-shared 
 	cd $(sqlite) && $(make) install DESTDIR=$(stow)/$(sqlite) 
-	#cd $(sqlite) && $(cc) -shared sqlite3.c -o sqlite3.dll 
-	#cd $(sqlite) && install -m755 -D sqlite3.dll $(stow)/$(sqlite)/bin/libsqlite3-0.dll
+	cp -rv $(stow)/$(sqlite)$(prefix)/* $(stow)/$(sqlite)/ && rm -rf $(stow)/$(sqlite)/target
+	cd $(sqlite) && $(cc) -shared sqlite3.c -o sqlite3.dll 
+	cd $(sqlite) && install -m755 -D sqlite3.dll $(stow)/$(sqlite)/bin/libsqlite3-0.dll
 	cd $(stow) && stow -R $(sqlite)
 	touch $@
 
@@ -628,7 +629,6 @@ clementine-deps: clementine-build-deps clementine-gst-plugins openssl glibnetwor
 		-no-script -no-scripttools \
 		-nomake demos -nomake examples \
 		-nomake docs -no-exceptions \
-		-system-sqlite \
 		-openssl-linked \
 		-webkit \
 		-release
