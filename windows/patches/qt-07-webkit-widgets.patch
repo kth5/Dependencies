@@ -1,0 +1,9 @@
+diff --git a/src/3rdparty/webkit/Source/WebKit/qt/tests/hybridPixmap/hybridPixmap.pro b/src/3rdparty/webkit/Source/WebKit/qt/tests/hybridPixmap/hybridPixmap.pro
+index 9e80870..98c7dad 100644
+--- a/src/3rdparty/webkit/Source/WebKit/qt/tests/hybridPixmap/hybridPixmap.pro
++++ b/src/3rdparty/webkit/Source/WebKit/qt/tests/hybridPixmap/hybridPixmap.pro
+@@ -9,3 +9,4 @@ HEADERS += widget.h
+ FORMS += widget.ui
+ RESOURCES += resources.qrc
+ CONFIG += console
++INCLUDEPATH += .
