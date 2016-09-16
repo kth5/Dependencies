@@ -1,0 +1,150 @@
+--- origsrc/qt-everywhere-opensource-src-4.8.1/mkspecs/cygwin-g++/qmake.conf	2012-03-14 09:01:12.000000000 -0500
++++ src/qt-everywhere-opensource-src-4.8.1/mkspecs/cygwin-g++/qmake.conf	2012-04-24 23:21:34.046742200 -0500
+@@ -14,17 +14,29 @@ QMAKE_INCREMENTAL_STYLE  = sublib
+ QMAKE_CC		= gcc
+ QMAKE_LEX		= flex
+ QMAKE_LEXFLAGS		= 
+-QMAKE_YACC		= byacc
++QMAKE_YACC		= yacc
+ QMAKE_YACCFLAGS		= -d
++QMAKE_YACCFLAGS_MANGLE  = -p $base -b $base
++QMAKE_YACC_HEADER       = $base.tab.h
++QMAKE_YACC_SOURCE       = $base.tab.c
++QMAKE_CYGWIN_SHLIB	= 1
++QMAKE_CYGWIN_EXE	= 1
++QMAKE_PCH_OUTPUT_EXT	= .gch
++
+ QMAKE_CFLAGS		= -pipe
+ QMAKE_CFLAGS_DEPS	= -M
+ QMAKE_CFLAGS_WARN_ON	= -Wall -W
+ QMAKE_CFLAGS_WARN_OFF	= -w
+ QMAKE_CFLAGS_RELEASE	= -O2
+ QMAKE_CFLAGS_DEBUG	= -g
++QMAKE_CFLAGS_RELEASE_WITH_DEBUGINFO = $$QMAKE_CFLAGS_RELEASE $$QMAKE_CFLAGS_DEBUG
+ QMAKE_CFLAGS_SHLIB	=
++QMAKE_CFLAGS_STATIC_LIB =
+ QMAKE_CFLAGS_YACC	= -Wno-unused -Wno-parentheses
++QMAKE_CFLAGS_HIDESYMS   =
+ QMAKE_CFLAGS_THREAD	= -D_REENTRANT
++QMAKE_CFLAGS_PRECOMPILE	= -x c-header -c ${QMAKE_PCH_INPUT} -o ${QMAKE_PCH_OUTPUT}
++QMAKE_CFLAGS_USE_PRECOMPILE = -include ${QMAKE_PCH_OUTPUT_BASE}
+ 
+ QMAKE_CXX		= g++
+ QMAKE_CXXFLAGS		= $$QMAKE_CFLAGS
+@@ -33,18 +45,26 @@ QMAKE_CXXFLAGS_WARN_ON	= $$QMAKE_CFLAGS_
+ QMAKE_CXXFLAGS_WARN_OFF	= $$QMAKE_CFLAGS_WARN_OFF
+ QMAKE_CXXFLAGS_RELEASE	= $$QMAKE_CFLAGS_RELEASE
+ QMAKE_CXXFLAGS_DEBUG	= $$QMAKE_CFLAGS_DEBUG
++QMAKE_CXXFLAGS_RELEASE_WITH_DEBUGINFO = $$QMAKE_CFLAGS_RELEASE_WITH_DEBUGINFO
+ QMAKE_CXXFLAGS_SHLIB	= $$QMAKE_CFLAGS_SHLIB
++QMAKE_CXXFLAGS_STATIC_LIB = $$QMAKE_CFLAGS_STATIC_LIB
+ QMAKE_CXXFLAGS_YACC	= $$QMAKE_CFLAGS_YACC
+ QMAKE_CXXFLAGS_THREAD	= $$QMAKE_CFLAGS_THREAD
++QMAKE_CXXFLAGS_PRECOMPILE = -x c++-header -c ${QMAKE_PCH_INPUT} -o ${QMAKE_PCH_OUTPUT}
++QMAKE_CXXFLAGS_USE_PRECOMPILE = $$QMAKE_CFLAGS_USE_PRECOMPILE
+ 
+ QMAKE_INCDIR		=
+ QMAKE_LIBDIR		=
+-QMAKE_INCDIR_X11	= /usr/X11R6/include
+-QMAKE_LIBDIR_X11	= /usr/X11R6/lib
++QMAKE_INCDIR_X11	=
++QMAKE_LIBDIR_X11	=
+ QMAKE_INCDIR_QT		= $$[QT_INSTALL_HEADERS]
+ QMAKE_LIBDIR_QT		= $$[QT_INSTALL_LIBS]
+-QMAKE_INCDIR_OPENGL	= /usr/X11R6/include
+-QMAKE_LIBDIR_OPENGL	= /usr/X11R6/lib
++QMAKE_INCDIR_OPENGL	=
++QMAKE_LIBDIR_OPENGL	=
++QMAKE_INCDIR_EGL	=
++QMAKE_LIBDIR_EGL	=
++QMAKE_INCDIR_OPENVG	=
++QMAKE_LIBDIR_OPENVG	=
+ 
+ QMAKE_LINK		= g++
+ QMAKE_LINK_SHLIB	= g++
+@@ -53,23 +73,30 @@ QMAKE_LINK_C_SHLIB	= gcc
+ QMAKE_LFLAGS		=
+ QMAKE_LFLAGS_RELEASE	=
+ QMAKE_LFLAGS_DEBUG	=
++QMAKE_LFLAGS_APP	=
+ QMAKE_LFLAGS_SHLIB	= -shared
+ QMAKE_LFLAGS_PLUGIN	= $$QMAKE_LFLAGS_SHLIB
+-QMAKE_LFLAGS_SONAME	= -Wl,-soname,
++QMAKE_LFLAGS_SONAME	=
+ QMAKE_LFLAGS_THREAD	=
+-QMAKE_LFLAGS_RPATH	= -Wl,-rpath,
+-QMAKE_CYGWIN_SHLIB	= 1
+-QMAKE_CYGWIN_EXE	= 1
++QMAKE_LFLAGS_RPATH	=
++QMAKE_LFLAGS_BSYMBOLIC_FUNC = -Wl,-Bsymbolic-functions
++QMAKE_LFLAGS_DYNAMIC_LIST   = -Wl,--dynamic-list,
+  
+ QMAKE_LIBS		=
+-QMAKE_LIBS_DYNLOAD	= -ldl
++QMAKE_LIBS_DYNLOAD	=
+ QMAKE_LIBS_X11		= -lXext -lX11
+ QMAKE_LIBS_X11SM	= -lSM -lICE
++QMAKE_LIBS_NIS		=
++QMAKE_LIBS_EGL		= -lEGL
+ QMAKE_LIBS_OPENGL	= -lGL
+ QMAKE_LIBS_OPENGL_QT	= -lGL
+-QMAKE_LIBS_THREAD	= -lpthread
+-QMAKE_PREFIX_SHLIB      = lib
++QMAKE_LIBS_OPENGL_ES1	= -lGLES_CM
++QMAKE_LIBS_OPENGL_ES2	= -lGLESv2
++QMAKE_LIBS_OPENVG	= -lOpenVG
++QMAKE_LIBS_THREAD	=
++QMAKE_PREFIX_SHLIB      = cyg
+ QMAKE_PREFIX_STATICLIB  = lib
++QMAKE_EXTENSION_SHLIB   = dll
+ QMAKE_EXTENSION_STATICLIB = a
+ 
+ QMAKE_MOC		= $$[QT_INSTALL_BINS]/moc
+@@ -83,9 +110,15 @@ QMAKE_TAR		= tar -cf
+ QMAKE_GZIP		= gzip -9f
+ 
+ QMAKE_COPY		= cp -f
++QMAKE_COPY_FILE		= $(COPY)
++QMAKE_COPY_DIR		= $(COPY) -r
+ QMAKE_MOVE		= mv -f
+ QMAKE_DEL_FILE		= rm -f
+ QMAKE_DEL_DIR		= rmdir
++QMAKE_STRIP		= strip
++QMAKE_STRIPFLAGS_LIB	= --strip-unneeded
+ QMAKE_CHK_DIR_EXISTS	= test -d
+ QMAKE_MKDIR		= mkdir -p
++QMAKE_INSTALL_FILE	= install -m 644 -p
++QMAKE_INSTALL_PROGRAM	= install -m 755 -p
+ load(qt_config)
+--- origsrc/qt-everywhere-opensource-src-4.8.1/mkspecs/cygwin-g++/qplatformdefs.h	2012-04-23 22:00:43.845907700 -0500
++++ src/qt-everywhere-opensource-src-4.8.1/mkspecs/cygwin-g++/qplatformdefs.h	2012-04-24 00:52:52.590678100 -0500
+@@ -71,9 +71,8 @@
+ 
+ #include <sys/types.h>
+ #include <sys/ioctl.h>
+-// Cygwin does not provide <sys/ipc.h> and <sys/shm.h> because it
+-// doesn't support SysV IPC or shared memory. See for example:
+-// 	http://afni.nimh.nih.gov/afni/afniboard/messages/1725.html
++#include <sys/ipc.h>
++#include <sys/shm.h>
+ #include <sys/time.h>
+ #include <sys/socket.h>
+ #include <sys/stat.h>
+@@ -84,6 +83,7 @@
+ #include "../common/posix/qplatformdefs.h"
+ 
+ #undef QT_OPEN_LARGEFILE
++#define QT_OPEN_LARGEFILE 0
+ 
+ #if defined(_XOPEN_SOURCE) && (_XOPEN_SOURCE >= 500)
+ #define QT_SNPRINTF		::snprintf
+--- origsrc/qt-everywhere-opensource-src-4.7.1/mkspecs/features/uitools.prf	2010-12-28 20:01:34.848460500 -0600
++++ src/qt-everywhere-opensource-src-4.7.1/mkspecs/features/uitools.prf	2010-12-25 21:26:04.000000000 -0600
+@@ -9,6 +9,6 @@ CONFIG(debug, debug|release) {
+     mac: QTUITOOLS_LINKAGE = -lQtUiTools_debug
+     win32: QTUITOOLS_LINKAGE = -lQtUiToolsd
+ }
+-LIBS += $$QTUITOOLS_LINKAGE
++LIBS = $$QTUITOOLS_LINKAGE $$LIBS
+ 
+ INCLUDEPATH = $$QMAKE_INCDIR_QT/QtUiTools $$INCLUDEPATH

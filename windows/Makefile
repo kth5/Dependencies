@@ -4,10 +4,11 @@ cxx=$(host)-g++
 ranlib=$(host)-ranlib
 
 # Local compiler
-build=i686-linux-gnu
+build := i686-linux-gnu
+qtplatform := linux-g++-32
 
 # How many source files to build in parallel within each package
-jobs=-j2
+jobs=-j1
 
 # Source and binary directories
 src=/src
@@ -159,16 +160,16 @@ buildpkgcmake=(cd $(1) && mkdir build ; cd build && $(cmake) && $(make))
 installpkg=rm -rf $(stow)/$(1) && \
 	cd $(1) && \
 	make install DESTDIR=$(stow)/$(1) && \
-	mv -fv $(stow)/$(1)$(prefix)/* $(stow)/$(1)/ && \
-	rm -rfv $(stow)/$(1)/share/info/dir && \
+	cp -rfv $(stow)/$(1)$(prefix)/* $(stow)/$(1)/ && \
+	rm -rfv $(stow)/$(1)/share/info && \
 	cd $(stow) && \
 	stow -R $(1) && \
 	touch $(work)/$@
 installpkgcmake=rm -rf $(stow)/$(1) && \
 	cd $(1)/build && \
 	make install DESTDIR=$(stow)/$(1) && \
-	rm -rfv $(stow)/$(1)/share/info/dir && \
-	mv -fv $(stow)/$(1)$(prefix)/* $(stow)/$(1)/ && \
+	rm -rfv $(stow)/$(1)/share/info && \
+	cp -rfv $(stow)/$(1)$(prefix)/* $(stow)/$(1)/ && \
 	cd $(stow) && \
 	stow -R $(1) && \
 	touch $(work)/$@
@@ -622,20 +623,28 @@ clementine-deps: clementine-build-deps clementine-gst-plugins openssl glibnetwor
 	patch -d $(qt) -p0 < patches/qt-05-qclipboard.patch
 	patch -d $(qt) -p1 < patches/qt-06-glib-honor-ExcludeSocketNotifiers-flag.patch 
 	patch -d $(qt) -p1 < patches/qt-07-webkit-widgets.patch
+	patch -d $(qt) -p2 < patches/qt-09-cygwin-mkspecs.patch
+	patch -d $(qt) -p1 < patches/qt-4.8.0-build-qtuitools-dynamically.patch 
+	patch -d $(qt) -p1 < patches/qt4-use-correct-pkg-config-static-flags.patch 
+	patch -d $(qt) -p0 < patches/qt-dont-perform-ipc-checks-for-win32.patch 
+	#patch -d $(qt) -p1 < patches/qt-dont-set-qt-dll-define-for-static-builds.patch 
+	patch -d $(qt) -p1 < patches/qt-fix-javascript-jit-on-mingw-x86_64.patch 
+	patch -d $(qt) -p2 < patches/4.8.7-cygwin-posix.patch
 	cd $(qt) && OPENSSL_LIBS="-llibeay32 -lssleay32" ./configure \
 		-opensource -confirm-license \
-		-platform linux-g++-32 \
+		-platform $(qtplatform) \
 		-xplatform win32-g++ -device-option CROSS_COMPILE=i686-w64-mingw32- \
 		-prefix $(stow)/$(qt) \
+		-force-pkg-config \
 		-no-phonon -no-xmlpatterns -no-qt3support \
 		-no-declarative -no-audio-backend \
 		-no-script -no-scripttools \
 		-nomake demos -nomake examples \
 		-nomake docs -no-exceptions \
-		-system-sqlite \
+		-plugin-sql-sqlite -system-sqlite -system-zlib -host-little-endian \
 		-openssl-linked \
 		-webkit \
-		-release
+		-release -no-debug -shared -fast
 	cd $(qt) && $(make)
 	cd $(qt) && make install
 	mv -fv $(stow)/$(qt)/lib/*.dll $(stow)/$(qt)/bin/

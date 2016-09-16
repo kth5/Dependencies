@@ -1,0 +1,95 @@
+--- origsrc/qt-everywhere-opensource-src-4.8.7/src/corelib/global/qglobal.cpp	2015-05-07 09:14:48.000000000 -0500
++++ src/qt-everywhere-opensource-src-4.8.7/src/corelib/global/qglobal.cpp	2015-05-26 13:04:20.453525700 -0500
+@@ -1689,7 +1689,7 @@ static QSysInfo::MacVersion macVersion()
+ }
+ const QSysInfo::MacVersion QSysInfo::MacintoshVersion = macVersion();
+ 
+-#elif defined(Q_OS_WIN32) || defined(Q_OS_CYGWIN) || defined(Q_OS_WINCE)
++#elif defined(Q_OS_WIN32) || defined(Q_OS_WINCE)
+ 
+ QT_BEGIN_INCLUDE_NAMESPACE
+ #include "qt_windows.h"
+--- origsrc/qt-everywhere-opensource-src-4.8.7/src/corelib/global/qnamespace.h	2015-05-07 09:14:48.000000000 -0500
++++ src/qt-everywhere-opensource-src-4.8.7/src/corelib/global/qnamespace.h	2015-05-26 13:04:20.513525700 -0500
+@@ -1219,7 +1219,7 @@ public:
+     };
+ #endif // Q_OS_MAC
+ 
+-#if defined(Q_OS_WIN) || defined(Q_OS_CYGWIN)
++#if defined(Q_OS_WIN)
+ #ifndef qdoc
+     typedef int WindowsVersion;
+ 
+--- origsrc/qt-everywhere-opensource-src-4.8.7/src/corelib/io/qfilesystemiterator_p.h	2015-05-07 09:14:48.000000000 -0500
++++ src/qt-everywhere-opensource-src-4.8.7/src/corelib/io/qfilesystemiterator_p.h	2015-05-26 13:04:51.173568000 -0500
+@@ -103,7 +103,7 @@ private:
+ #else
+     QT_DIR *dir;
+     QT_DIRENT *dirEntry;
+-#if defined(_POSIX_THREAD_SAFE_FUNCTIONS) && !defined(Q_OS_CYGWIN) || defined(QT_EXT_QNX_READDIR_R)
++#if defined(_POSIX_THREAD_SAFE_FUNCTIONS) || defined(QT_EXT_QNX_READDIR_R)
+     // for readdir_r
+     QScopedPointer<QT_DIRENT, QScopedPointerPodDeleter> mt_file;
+ #if defined(QT_EXT_QNX_READDIR_R)
+--- origsrc/qt-everywhere-opensource-src-4.8.7/src/corelib/io/qfilesystemiterator_unix.cpp	2015-05-07 09:14:48.000000000 -0500
++++ src/qt-everywhere-opensource-src-4.8.7/src/corelib/io/qfilesystemiterator_unix.cpp	2015-05-26 13:05:12.743597800 -0500
+@@ -70,7 +70,7 @@ QFileSystemIterator::QFileSystemIterator
+         if (!nativePath.endsWith('/'))
+             nativePath.append('/');
+ 
+-#if defined(_POSIX_THREAD_SAFE_FUNCTIONS) && !defined(Q_OS_CYGWIN) || defined(QT_EXT_QNX_READDIR_R)
++#if defined(_POSIX_THREAD_SAFE_FUNCTIONS) || defined(QT_EXT_QNX_READDIR_R)
+         // ### Race condition; we should use fpathconf and dirfd().
+         size_t maxPathName = ::pathconf(nativePath.constData(), _PC_NAME_MAX);
+         if (maxPathName == size_t(-1))
+@@ -110,7 +110,7 @@ bool QFileSystemIterator::advance(QFileS
+     lastError = QT_EXT_QNX_READDIR_R(dir, mt_file.data(), &dirEntry, direntSize);
+     if (lastError)
+         return false;
+-#elif defined(_POSIX_THREAD_SAFE_FUNCTIONS) && !defined(Q_OS_CYGWIN)
++#elif defined(_POSIX_THREAD_SAFE_FUNCTIONS)
+     lastError = QT_READDIR_R(dir, mt_file.data(), &dirEntry);
+     if (lastError)
+         return false;
+--- origsrc/qt-everywhere-opensource-src-4.8.7/src/gui/kernel/qapplication.h	2015-05-07 09:14:43.000000000 -0500
++++ src/qt-everywhere-opensource-src-4.8.7/src/gui/kernel/qapplication.h	2015-05-26 13:04:20.513525700 -0500
+@@ -343,7 +343,7 @@ public:
+     enum { NormalColors = NormalColor, CustomColors = CustomColor };
+     static inline QT3_SUPPORT ColorMode colorMode() { return static_cast<ColorMode>(colorSpec()); }
+     static inline QT3_SUPPORT void setColorMode(ColorMode mode) { setColorSpec(int(mode)); }
+-#if defined(Q_OS_WIN32) || defined(Q_OS_CYGWIN)
++#if defined(Q_OS_WIN32)
+     static QT3_SUPPORT Qt::WindowsVersion winVersion() { return (Qt::WindowsVersion)QSysInfo::WindowsVersion; }
+ #endif
+ #if defined(Q_OS_MAC)
+--- origsrc/qt-everywhere-opensource-src-4.8.7/src/gui/kernel/qapplication_p.h	2015-05-07 09:14:43.000000000 -0500
++++ src/qt-everywhere-opensource-src-4.8.7/src/gui/kernel/qapplication_p.h	2015-05-26 13:04:20.523525800 -0500
+@@ -100,7 +100,7 @@ extern bool qt_is_gui_used;
+ extern QClipboard *qt_clipboard;
+ #endif
+ 
+-#if defined (Q_OS_WIN32) || defined (Q_OS_CYGWIN) || defined(Q_OS_WINCE)
++#if defined (Q_OS_WIN32) || defined(Q_OS_WINCE)
+ extern QSysInfo::WinVersion qt_winver;
+ enum { QT_TABLET_NPACKETQSIZE = 128 };
+ # ifdef Q_OS_WINCE
+--- origsrc/qt-everywhere-opensource-src-4.8.7/src/qt3support/network/q3dns.cpp	2015-05-07 09:14:48.000000000 -0500
++++ src/qt-everywhere-opensource-src-4.8.7/src/qt3support/network/q3dns.cpp	2015-05-26 13:04:20.533525800 -0500
+@@ -42,7 +42,7 @@
+ #include "qplatformdefs.h"
+ #include "qbytearray.h"
+ #include <private/qsystemlibrary_p.h>
+-#if defined(Q_OS_WIN32) || defined(Q_OS_WINCE) || defined(Q_OS_CYGWIN)
++#if defined(Q_OS_WIN32) || defined(Q_OS_WINCE)
+ # include "qt_windows.h"
+ #else
+ # include <sys/types.h>
+@@ -2214,7 +2214,7 @@ void Q3Dns::connectNotify( const char *s
+ }
+ #endif
+ 
+-#if defined(Q_OS_WIN32) || defined(Q_OS_CYGWIN)
++#if defined(Q_OS_WIN32)
+ 
+ #if defined(Q_DNS_SYNCHRONOUS)
+ void Q3Dns::doSynchronousLookup()
