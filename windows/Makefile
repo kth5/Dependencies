@@ -178,7 +178,7 @@ extractandbuildcmake=$(call extractpkg,$(1)) && $(call buildpkgcmake,$(2)) && $(
 
 
 # Top-level targets
-clementine-build-deps: pthreads dlfcn boost liblastfm qt taglib \
+clementine-build-deps: pthreads boost liblastfm qt taglib \
 		       libgpod glew gstreamer win7sdk qtsparkle chromaprint \
 		       protobuf spotify qjson fftw sparsehash echonest
 clementine-gst-plugins: gst-plugins-base gst-plugins-good gst-plugins-bad \
@@ -571,19 +571,19 @@ clementine-deps: clementine-build-deps clementine-gst-plugins openssl glibnetwor
 	$(call installpkg,$(mmswin32))
 
 # Not working - requires iconv.h
-.done-libquicktime: .done-dlfcn
-	$(call extractpkg,$(quicktimetgz))
-	cd $(quicktime) && patch -p0 < ../patches/libquicktime-01-configure.patch
-	cd $(quicktime) && autoconf
-	cd $(quicktime) && $(configure) --without-doxygen --without-ffmpeg --without-libiconv-prefix
-	cd $(quicktime) && $(make)
-	$(call installpkg,$(quicktime))
+#.done-libquicktime: .done-dlfcn
+#	$(call extractpkg,$(quicktimetgz))
+#	cd $(quicktime) && patch -p0 < ../patches/libquicktime-01-configure.patch
+#	cd $(quicktime) && autoconf
+#	cd $(quicktime) && $(configure) --without-doxygen --without-ffmpeg --without-libiconv-prefix
+#	cd $(quicktime) && $(make)
+#	$(call installpkg,$(quicktime))
 
-.done-dlfcn:
-	-mkdir $(stow)/$(dlfcn)/
-	tar -xzf $(dlfcntgz) -C $(stow)/$(dlfcn)/
-	cd $(stow) && stow -R $(dlfcn)
-	touch $@
+#.done-dlfcn:
+#	-mkdir $(stow)/$(dlfcn)/
+#	tar -xzf $(dlfcntgz) -C $(stow)/$(dlfcn)/
+#	cd $(stow) && stow -R $(dlfcn)
+#	touch $@
 
 .done-usb:
 	unzip -o -d $(stow) $(usbwin32zip)
