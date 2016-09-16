@@ -42,7 +42,6 @@ clementine_dlls=glew32.dll \
 		libgnutls-30.dll \
 		libgobject-2.0-0.dll \
 		libgpg-error-0.dll \
-		libgpod.dll \
 		libgstapp-1.0-0.dll \
 		libgstaudio-1.0-0.dll \
 		libgstbase-1.0-0.dll \
@@ -83,6 +82,7 @@ clementine_dlls=glew32.dll \
 		libtasn1-6.dll \
 		libvorbis-0.dll \
 		libvorbisenc-2.dll \
+		libwinpthread-1.dll \
 		libxml2-2.dll \
 		pthreadGC2.dll \
 		QtCore4.dll \
@@ -94,6 +94,7 @@ clementine_dlls=glew32.dll \
 		QtXml4.dll \
 		ssleay32.dll \
 		zlib1.dll
+		#libgpod.dll
 clementine_gst_plugins=libgstapetag.dll \
 		       libgstapp.dll \
 		       libgstasf.dll \
@@ -211,6 +212,7 @@ clementine-deps: clementine-build-deps clementine-gst-plugins openssl glibnetwor
 
 .done-system:
 	cp /usr/lib/gcc/i686-w64-mingw32/5.3-win32/*.dll $(prefix)/bin
+	cp /usr/i686-w64-mingw32/lib/libwinpthread-1.dll $(prefix)/bin
 	touch $@
 
 .done-qjson: .done-qt
@@ -344,9 +346,10 @@ clementine-deps: clementine-build-deps clementine-gst-plugins openssl glibnetwor
 
 .done-libgpod: .done-sqlite .done-libplist .done-glib
 	$(call extractpkg,$(gpodtgz))
-	cd $(gpod) && $(configure) --enable-shared --disable-static
+	cd $(gpod) && $(configure)
 	cd $(gpod)/src && $(make) install DESTDIR=$(stow)/$(gpod)
-	cd $(stow) && stow $(gpod)
+	cp -rv $(stow)/$(gpod)$(prefix)/* $(stow)/$(gpod)/ && rm -rf $(stow)/$(gpod)/target
+	cd $(stow) && stow -R $(gpod)
 	touch $@
 
 .done-gstreamer: .done-glib .done-libxml .done-orc
@@ -629,6 +632,7 @@ clementine-deps: clementine-build-deps clementine-gst-plugins openssl glibnetwor
 		-no-script -no-scripttools \
 		-nomake demos -nomake examples \
 		-nomake docs -no-exceptions \
+		-system-sqlite \
 		-openssl-linked \
 		-webkit \
 		-release
@@ -718,16 +722,17 @@ clementine-deps: clementine-build-deps clementine-gst-plugins openssl glibnetwor
 
 .done-protobuf: .done-system
 	# Compile a host version first for protoc
-	#$(call extractpkg,$(protobuftgz))
-	#-cd $(protobuf) && make clean
-	#cd $(protobuf) && $(configure)
-	#cd $(protobuf) && $(make)
-	#cd $(protobuf) && make install
-	#-rm -fv $(prefix)/lib/libproto*.la
-	#-rm -fv $(prefix)/lib/libproto*.a
-	#-rm -rfv $(prefix)/include/google
-	#-rm -rf $(prefix)/lib/pkgconfig/protobuf*.pc
-	#cd $(protobuf) && make clean
+	$(call extractpkg,$(protobuftgz))
+	-cd $(protobuf) && make clean
+	cd $(protobuf) && ./configure --prefix=$(prefix) --enable-static --disable-shared
+	cd $(protobuf) && $(make)
+	cd $(protobuf) && make install
+	-rm -fv $(prefix)/lib/libproto*.la
+	-rm -fv $(prefix)/lib/libproto*.a
+	-rm -rfv $(prefix)/include/google
+	-rm -rf $(prefix)/lib/pkgconfig/protobuf*.pc
+	-rm -rfv $(prefix)/bin/libproto*dll
+	cd $(protobuf) && make clean
 
 	# Now do the target build
 	$(call extractandbuild,$(protobuftgz),$(protobuf))
