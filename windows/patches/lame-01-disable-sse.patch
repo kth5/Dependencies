@@ -1,0 +1,10 @@
+--- configure.in.orig	2016-09-12 15:24:18.190247440 +0800
++++ configure.in	2016-09-12 15:24:27.494044938 +0800
+@@ -96,7 +96,6 @@
+ 		 sys/soundcard.h \
+ 		 sys/time.h \
+ 		 unistd.h \
+-		 xmmintrin.h \
+ 		 linux/soundcard.h)
+ 
+ dnl Checks for typedefs, structures, and compiler characteristics.
