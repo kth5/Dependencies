@@ -1,0 +1,28 @@
+--- configure.ac.orig	2016-09-22 10:26:35.201642100 +0800
++++ configure.ac	2016-09-22 10:28:04.262880700 +0800
+@@ -39,25 +39,6 @@
+ AC_PROG_CC
+ AM_PROG_AS
+ 
+-if test "$GCC" = yes
+-then
+-    case "$host" in
+-	*-*-mingw*)
+-	    case "$build" in
+-		*-*-cygwin*)
+-		    CPPFLAGS="$CPPFLAGS -mno-cygwin"
+-		    LDFLAGS="$LDFLAGS -mno-cygwin"
+-		    ;;
+-	    esac
+-    esac
+-
+-dnl    case "$host" in
+-dnl	*-*-cygwin* | *-*-mingw*)
+-dnl	    LDFLAGS="$LDFLAGS -no-undefined -mdll"
+-dnl	    ;;
+-dnl    esac
+-fi
+-
+ dnl Support for libtool.
+ 
+ dnl AC_DISABLE_SHARED

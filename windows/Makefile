@@ -8,7 +8,7 @@ build := i686-linux-gnu
 qtplatform := linux-g++-32
 
 # How many source files to build in parallel within each package
-jobs=-j1
+jobs=-j2
 
 # Source and binary directories
 src=/src
@@ -63,7 +63,7 @@ clementine_dlls=glew32.dll \
 		libid3tag.dll \
 		libintl-8.dll \
 		liblastfm.dll \
-		libmad.dll \
+		libmad-0.dll \
 		libmms-0.dll \
 		libmp3lame-0.dll \
 		libnettle-6-2.dll \
@@ -161,6 +161,7 @@ installpkg=rm -rf $(stow)/$(1) && \
 	cd $(1) && \
 	make install DESTDIR=$(stow)/$(1) && \
 	cp -rfv $(stow)/$(1)$(prefix)/* $(stow)/$(1)/ && \
+	rm -rfv $(stow)/$(1)$(prefix) && \
 	rm -rfv $(stow)/$(1)/share/info && \
 	cd $(stow) && \
 	stow -R $(1) && \
@@ -168,6 +169,7 @@ installpkg=rm -rf $(stow)/$(1) && \
 installpkgcmake=rm -rf $(stow)/$(1) && \
 	cd $(1)/build && \
 	make install DESTDIR=$(stow)/$(1) && \
+	rm -rfv $(stow)/$(1)$(prefix) && \
 	rm -rfv $(stow)/$(1)/share/info && \
 	cp -rfv $(stow)/$(1)$(prefix)/* $(stow)/$(1)/ && \
 	cd $(stow) && \
@@ -202,8 +204,8 @@ clementine-deps: clementine-build-deps clementine-gst-plugins openssl glibnetwor
 	done
 	cp -v $(prefix)/lib/gio/modules/libgiognutls.dll clementine-deps/gio-modules/
 	cp -vr $(src)/mingwm10.dll $(src)/nsisplugins clementine-deps/
-	cp -vr /usr/lib/gcc/$(host)/*win32/libgcc_s_sjlj-1.dll clementine-deps/
-	cp -vr /usr/lib/gcc/$(host)/*win32/libstdc++-6.dll clementine-deps/
+	-cp -vr /usr/lib/gcc/$(host)/*/libgcc_s_sjlj-1.dll clementine-deps/
+	-cp -vr /usr/lib/gcc/$(host)/*/libstdc++-6.dll clementine-deps/
 	for f in `find clementine-deps/ -name '*.dll' $(dont_strip)`; do \
 		$(host)-strip -v $$f; \
 	done
@@ -212,8 +214,9 @@ clementine-deps: clementine-build-deps clementine-gst-plugins openssl glibnetwor
 # The actual commands for compiling each package follow
 
 .done-system:
-	cp /usr/lib/gcc/i686-w64-mingw32/5.3-win32/*.dll $(prefix)/bin
-	cp /usr/i686-w64-mingw32/lib/libwinpthread-1.dll $(prefix)/bin
+	if [ -d /usr/lib/gcc/i686-w64-mingw32/$(gccver)/ ]; then cp /usr/lib/gcc/i686-w64-mingw32/$(gccver)/*.dll $(prefix)/bin; fi
+	if [ -f /usr/i686-w64-mingw32/lib/libwinpthread-1.dll ]; then cp /usr/i686-w64-mingw32/lib/libwinpthread-1.dll $(prefix)/bin; fi 
+	if [ -d /usr/i686-w64-mingw32/sys-root/mingw/bin ]; then cp /usr/i686-w64-mingw32/sys-root/mingw/bin/libwinpthread-1.dll $(prefix)/bin; fi
 	touch $@
 
 .done-qjson: .done-qt
@@ -353,7 +356,7 @@ clementine-deps: clementine-build-deps clementine-gst-plugins openssl glibnetwor
 	cd $(stow) && stow -R $(gpod)
 	touch $@
 
-.done-gstreamer: .done-glib .done-libxml .done-orc
+.done-gstreamer: .done-glib .done-gcrypt .done-libxml .done-orc
 	$(call extractpkg,$(gsttgz))
 	cd $(gst) && patch -Np0 -i ../patches/gst-01-clockid_t.patch
 	cd $(gst) && $(configure) --disable-examples --disable-tests
@@ -432,13 +435,14 @@ clementine-deps: clementine-build-deps clementine-gst-plugins openssl glibnetwor
 	cd $(stow) && stow -R $(speex)
 	touch $@
 
-.done-gst-plugins-ugly: .done-gstreamer .done-gst-plugins-base .done-oil .done-mad .done-lame .done-cdio
+.done-gst-plugins-ugly: .done-gstreamer .done-gst-plugins-base .done-oil .done-lame .done-cdio
 	$(call extractpkg,$(gstuglytgz))
 	cd $(gstugly) && \
 		$(pkgconfig) LDFLAGS="-L/target/bin $(ldflags)" CFLAGS="$(cflags)" \
 		./configure --host=$(host) --build=$(build) --prefix=$(prefix) \
-		--disable-examples
+		--disable-examples --disable-static --enable-experimental
 	sed -i.bak 's/$$ECHO "$$win32_libid_type"/$$ECHO "x86 DLL"/' $(gstugly)/libtool
+	sed -i -e 's/ -shared / -Wl,-O1,--as-needed\0/g' $(gstugly)/libtool
 	cd $(gstugly) && $(make)
 	$(call installpkg,$(gstugly))
 
@@ -447,6 +451,10 @@ clementine-deps: clementine-build-deps clementine-gst-plugins openssl glibnetwor
 
 .done-id3tag:
 	$(call extractpkg,$(id3tagtgz))
+	cd $(id3tag) && patch -Np0 -i ../patches/libid3tag-01-remove-cygwin-bits.patch
+	cd $(id3tag) && rm -v aclocal.m4 Makefile.in
+	cd $(id3tag) && touch NEWS AUTHORS ChangeLog
+	cd $(id3tag) && autoreconf -fiv
 	cd $(id3tag) && $(configure)
 	cd $(id3tag) && $(make)
 
@@ -459,29 +467,32 @@ clementine-deps: clementine-build-deps clementine-gst-plugins openssl glibnetwor
 	cd $(id3tag) && make install DESTDIR=$(stow)/$(id3tag)
 	mv -fv $(stow)/$(id3tag)$(prefix)/* $(stow)/$(id3tag)/
 	-mkdir $(stow)/$(id3tag)/bin/
-	cp $(id3tag)/libid3tag.dll $(stow)/$(id3tag)/bin/
+	cp $(id3tag)/libid3tag.dll.exe $(stow)/$(id3tag)/bin/libid3tag.dll
 	rm -f $(stow)/$(id3tag)/lib/libid3tag.*
 	cd $(stow) && stow -R $(id3tag)
 	touch $@
 
 .done-mad: .done-id3tag
 	$(call extractpkg,$(madtgz))
-	cd $(mad) && patch -p0 < ../patches/libmad-01-force-mem.patch
-	$(call buildpkg,$(mad))
+	#cd $(mad) && patch -Np0 -i ../patches/libmad-01-force-mem.patch
+	cd $(mad) && patch -Np0 -i ../patches/libmad-02-remove-cygwin-bits.patch
+	cd $(mad) && patch -Np1 -i ../patches/libmad-03-config.patch
+	cd $(mad) && patch -Np1 -i ../patches/libmad-04-no-undefined.mingw.patch
+	cd $(mad) && patch -Np1 -i ../patches/libmad-05-frame-length.patch
+	cd $(mad) && patch -Np1 -i ../patches/libmad-06-optimize.patch
+	cd $(mad) && rm -v aclocal.m4 Makefile.in
+	cd $(mad) && touch NEWS AUTHORS ChangeLog
+	cd $(mad) && autoreconf -iv
+	cd $(mad) && $(configure) --enable-shared --disable-static --enable-experimental
+	cd $(mad) && $(make)
 
-	# libtool is retarded and doesn't link this dll properly
-	cd $(mad) && /bin/bash ./libtool --mode=link $(host)-gcc \
-		-Wall -march=pentium -g -O -fforce-addr -fthread-jumps \
-		-fcse-follow-jumps -fcse-skip-blocks -fexpensive-optimizations \
-		-fregmove -fschedule-insns2 -fstrength-reduce --shared  \
-		-o libmad.dll -rpath /target/lib -version-info 2:1:2 *.lo
+	cd $(mad) && $(host)-gcc $(cflags) -shared .libs/*.o -o .libs/libmad.dll \
+		-Xlinker --out-implib -Xlinker .libs/libmad.dll.a
 
 	rm -rf $(stow)/$(mad)
 	cd $(mad) && make install DESTDIR=$(stow)/$(mad)
-	mv -fv $(stow)/$(mad)$(prefix)/* $(stow)/$(mad)/
-	-mkdir $(stow)/$(mad)/bin/
-	cp $(mad)/libmad.dll $(stow)/$(mad)/bin/
-	rm -f $(stow)/$(mad)/lib/libmad.*
+	cp -rv $(stow)/$(mad)$(prefix)/* $(stow)/$(mad)/
+	#cp $(mad)/libmad.dll.exe $(stow)/$(mad)/bin/libmad.dll
 	cd $(stow) && stow -R $(mad)
 	touch $@
 
@@ -625,12 +636,13 @@ clementine-deps: clementine-build-deps clementine-gst-plugins openssl glibnetwor
 	patch -d $(qt) -p1 < patches/qt-07-webkit-widgets.patch
 	patch -d $(qt) -p2 < patches/qt-09-cygwin-mkspecs.patch
 	patch -d $(qt) -p1 < patches/qt-4.8.0-build-qtuitools-dynamically.patch 
-	patch -d $(qt) -p1 < patches/qt4-use-correct-pkg-config-static-flags.patch 
-	patch -d $(qt) -p0 < patches/qt-dont-perform-ipc-checks-for-win32.patch 
+	#patch -d $(qt) -p1 < patches/qt4-use-correct-pkg-config-static-flags.patch 
+	#patch -d $(qt) -p0 < patches/qt-dont-perform-ipc-checks-for-win32.patch 
 	#patch -d $(qt) -p1 < patches/qt-dont-set-qt-dll-define-for-static-builds.patch 
+	patch -d $(qt) -p2 < patches/4.8.5-qmake-implib.patch
 	patch -d $(qt) -p1 < patches/qt-fix-javascript-jit-on-mingw-x86_64.patch 
 	patch -d $(qt) -p2 < patches/4.8.7-cygwin-posix.patch
-	cd $(qt) && OPENSSL_LIBS="-llibeay32 -lssleay32" ./configure \
+	cd $(qt) &&  PKG_CONFIG_PATH=/target/lib/pkgconfig OPENSSL_LIBS="-llibeay32 -lssleay32" ./configure \
 		-opensource -confirm-license \
 		-platform $(qtplatform) \
 		-xplatform win32-g++ -device-option CROSS_COMPILE=i686-w64-mingw32- \
@@ -705,10 +717,12 @@ clementine-deps: clementine-build-deps clementine-gst-plugins openssl glibnetwor
 	$(call extractpkg,$(fftwtgz))
 	cd $(fftw) && $(configure) \
 		--with-our-malloc16 --with-windows-f77-mangling --enable-shared \
-		--disable-static --enable-threads --with-combined-threads \
-		--enable-portable-binary
-	cd $(fftw) && $(make)
-	$(call installpkg,$(fftw))
+		--disable-static --enable-threads --with-combined-threads
+	cd $(fftw) && $(make) DESTDIR=$(stow)/$(fftw) install
+	cd $(stow)/$(fftw) && cp -rv target/* . && rm -rf target
+	cd $(stow) && stow -R $(fftw) 
+	touch $@	
+
 
 .done-libarchive: .done-libxml
 	$(call extractpkg,$(archivetgz))
@@ -726,25 +740,27 @@ clementine-deps: clementine-build-deps clementine-gst-plugins openssl glibnetwor
 	rm -rf $(stow)/$(archive)
 	cd $(archive)/bin && make install DESTDIR=$(stow)/$(archive)
 	mv -fv $(stow)/$(archive)$(prefix)/* $(stow)/$(archive)/
-	cd $(stow) && stow $(archive)
+	cd $(stow) && stow -R $(archive)
 	touch $@
 
 .done-protobuf: .done-system
 	# Compile a host version first for protoc
 	$(call extractpkg,$(protobuftgz))
-	-cd $(protobuf) && make clean
-	cd $(protobuf) && ./configure --prefix=$(prefix) --enable-static --disable-shared
+	#-cd $(protobuf) && make clean
+	cd $(protobuf) && ./configure --prefix=$(prefix)
 	cd $(protobuf) && $(make)
-	cd $(protobuf) && make install
+	cd $(protobuf) && $(make) install
 	-rm -fv $(prefix)/lib/libproto*.la
 	-rm -fv $(prefix)/lib/libproto*.a
 	-rm -rfv $(prefix)/include/google
 	-rm -rf $(prefix)/lib/pkgconfig/protobuf*.pc
 	-rm -rfv $(prefix)/bin/libproto*dll
-	cd $(protobuf) && make clean
-
+	cd $(protobuf) && $(make) clean
 	# Now do the target build
-	$(call extractandbuild,$(protobuftgz),$(protobuf))
+	$(call extractpkg,$(protobuftgz))
+	cd $(protobuf) && $(configure) --with-protoc=/target/bin/protoc.exe
+	cd $(protobuf) && $(make) install
+	touch $@
 
 .done-spotify:
 	-mkdir -p $(stow)/$(spotifywin32)
