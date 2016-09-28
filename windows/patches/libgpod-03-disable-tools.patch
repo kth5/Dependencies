@@ -1,0 +1,8 @@
+--- libgpod-0.8.3/Makefile.am.orig	2016-09-28 14:53:51.094834800 +0800
++++ libgpod-0.8.3/Makefile.am	2016-09-28 14:53:59.674614800 +0800
+@@ -1,4 +1,4 @@
+-SUBDIRS=src tools tests po m4 docs bindings 
++SUBDIRS=src po m4 docs bindings 
+ 
+ # build documentation when doing a distcheck.
+ DISTCHECK_CONFIGURE_FLAGS = 				\
