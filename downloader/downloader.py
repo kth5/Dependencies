@@ -69,7 +69,7 @@ FILES = [
     ('opus-1.1.3.tar.gz', '32bbb6b557fe1b6066adc0ae1f08b629'),
     ('orc-0.4.25.tar.xz', '8582a28b15f53110c88d8043d9f55bcf'),
     ('protobuf-2.6.1.tar.gz', 'f3916ce13b7fcb3072a1fa8cf02b2423'),
-    ('pthreads-win32-2.8.0.tar.gz', '66bba1fc3713f9bf070eca539139def8'),
+    ('pthreads-w32-2-9-1.tar.gz', '0fd88dc15fa4f284598f1d3942fe3cee'),
     ('qjson-0.8.1.tar.gz', '4eef13da988edf8f91c260a3e1baeea9'),
     ('qt-everywhere-opensource-src-4.8.7.tar.gz', 'd990ee66bf7ab0c785589776f35ba6ad'),
     ('sparsehash-2.0.3.tar.gz', '69d662c690d6c9da82b99cec86357fa1'),

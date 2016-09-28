@@ -94,8 +94,8 @@ clementine_dlls=glew32.dll \
 		QtSvg4.dll \
 		QtXml4.dll \
 		ssleay32.dll \
-		zlib1.dll
-		#libgpod.dll
+		zlib1.dll \
+		libgpod-4.dll
 clementine_gst_plugins=libgstapetag.dll \
 		       libgstapp.dll \
 		       libgstasf.dll \
@@ -350,11 +350,11 @@ clementine-deps: clementine-build-deps clementine-gst-plugins openssl glibnetwor
 
 .done-libgpod: .done-sqlite .done-libplist .done-glib
 	$(call extractpkg,$(gpodtgz))
+	cd $(gpod) && patch -Np1 -i ../patches/libgpod-03-disable-tools.patch
+	cd $(gpod) && autoreconf
 	cd $(gpod) && $(configure)
-	cd $(gpod)/src && $(make) install DESTDIR=$(stow)/$(gpod)
-	cp -rv $(stow)/$(gpod)$(prefix)/* $(stow)/$(gpod)/ && rm -rf $(stow)/$(gpod)/target
-	cd $(stow) && stow -R $(gpod)
-	touch $@
+	cd $(gpod) && $(make) install DESTDIR=$(stow)/$(gpod)
+	$(call installpkg,$(gpod))
 
 .done-gstreamer: .done-glib .done-gcrypt .done-libxml .done-orc
 	$(call extractpkg,$(gsttgz))
@@ -608,9 +608,9 @@ clementine-deps: clementine-build-deps clementine-gst-plugins openssl glibnetwor
 	touch $@
 
 .done-pthreads:
-	tar -xzf $(pthreadstgz) -C $(stow)
-	patch -d $(stow)/$(pthreads) -p0 < patches/pthreads-01-timespec.patch
-	cd $(stow) && stow $(pthreads)
+	$(call extractpkg,$(pthreadstgz))
+	cd $(pthreads) && $(make) CROSS=$(host)- clean GC-inlined 
+	install -m755 $(pthreads)/pthreadGC2.dll $(prefix)/bin/pthreadGC2.dll
 	touch $@
 
 .done-taglib: .done-glib .done-opus
@@ -744,23 +744,12 @@ clementine-deps: clementine-build-deps clementine-gst-plugins openssl glibnetwor
 	touch $@
 
 .done-protobuf: .done-system
-	# Compile a host version first for protoc
 	$(call extractpkg,$(protobuftgz))
-	#-cd $(protobuf) && make clean
-	cd $(protobuf) && ./configure --prefix=$(prefix)
+	if [ ! -f $(stow)/$(protobuf)-native/bin/protoc.exe ]; then cd $(protobuf) && ./configure --prefix=$(stow)/$(protobuf)-native && make clean && make install; fi 
+	cd $(protobuf) && make clean
+	cd $(protobuf) && $(configure) --with-protoc=$(stow)/$(protobuf)-native/bin/protoc.exe
 	cd $(protobuf) && $(make)
-	cd $(protobuf) && $(make) install
-	-rm -fv $(prefix)/lib/libproto*.la
-	-rm -fv $(prefix)/lib/libproto*.a
-	-rm -rfv $(prefix)/include/google
-	-rm -rf $(prefix)/lib/pkgconfig/protobuf*.pc
-	-rm -rfv $(prefix)/bin/libproto*dll
-	cd $(protobuf) && $(make) clean
-	# Now do the target build
-	$(call extractpkg,$(protobuftgz))
-	cd $(protobuf) && $(configure) --with-protoc=/target/bin/protoc.exe
-	cd $(protobuf) && $(make) install
-	touch $@
+	$(call installpkg,$(protobuf))
 
 .done-spotify:
 	-mkdir -p $(stow)/$(spotifywin32)
