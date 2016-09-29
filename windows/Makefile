@@ -434,7 +434,7 @@ clementine-deps: clementine-build-deps clementine-gst-plugins openssl glibnetwor
 	cd $(stow) && stow -R $(speex)
 	touch $@
 
-.done-gst-plugins-ugly: .done-gstreamer .done-gst-plugins-base .done-oil .done-lame .done-cdio
+.done-gst-plugins-ugly: .done-gstreamer .done-gst-plugins-base .done-oil .done-lame .done-mad .done-cdio
 	$(call extractpkg,$(gstuglytgz))
 	cd $(gstugly) && \
 		$(pkgconfig) LDFLAGS="-L/target/bin $(ldflags)" CFLAGS="$(cflags)" \
