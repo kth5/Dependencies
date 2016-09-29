@@ -355,7 +355,7 @@ clementine-deps: clementine-build-deps clementine-gst-plugins openssl glibnetwor
 	cd $(gpod) && $(make) install DESTDIR=$(stow)/$(gpod)
 	$(call installpkg,$(gpod))
 
-.done-gstreamer: .done-glib .done-gcrypt .done-libxml .done-orc
+.done-gstreamer: .done-glib .done-gcrypt .done-id3tag .done-libxml .done-orc
 	$(call extractpkg,$(gsttgz))
 	cd $(gst) && patch -Np0 -i ../patches/gst-01-clockid_t.patch
 	cd $(gst) && $(configure) --disable-examples --disable-tests
