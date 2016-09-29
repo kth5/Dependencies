@@ -236,7 +236,3 @@ usb: .done-usb
 vorbis: .done-vorbis
 wavpack: .done-wavpack
 win7sdk: .done-win7sdk
-
-
-# get GCC version
-gccver=$$($(cc) -v &>/dev/stdout | grep 'gcc version' | awk '{print $$3};')
