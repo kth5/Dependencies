@@ -742,8 +742,7 @@ clementine-deps: clementine-build-deps clementine-gst-plugins openssl glibnetwor
 
 .done-protobuf: .done-system
 	$(call extractpkg,$(protobuftgz))
-	if [ ! -f $(stow)/$(protobuf)-native/bin/protoc.exe -a "$$(uname)" != "Linux" ]; then cd $(protobuf) && ./configure --prefix=$(stow)/$(protobuf)-native && make clean && make install; fi 
-	cd $(protobuf) && make clean
+	if [ ! -f $(stow)/$(protobuf)-native/bin/protoc.exe -a "$$(uname)" != "Linux" ]; then cd $(protobuf) && ./configure --prefix=$(stow)/$(protobuf)-native && make clean && make install && make clean; fi 
 	if [ "$$(uname)" != "Linux" ]; then cd $(protobuf) && $(configure) --with-protoc=$(stow)/$(protobuf)-native/bin/protoc.exe; fi
 	if [ "$$(uname)" = "Linux" ]; then cd $(protobuf) && $(configure); fi
 	cd $(protobuf) && $(make)
