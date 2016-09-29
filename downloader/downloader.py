@@ -40,7 +40,6 @@ FILES = [
     ('libgcrypt-1.7.3.tar.bz2', 'c869e542cc13a1c28d8055487bf7f5c4'),
     ('libgpg-error-1.24.tar.bz2', 'feb42198c0aaf3b28eabe8f41a34b983'),
     ('libgpod-0.8.3.tar.bz2', 'f8a0b7a34e768e33a708e8dd172bd6f8'),
-    ('libgpod-0.8.2.tar.bz2', 'ff0fd875fa08f2a6a49dec57ce3367ab'),
     ('libiconv-1.14.tar.gz', 'e34509b1623cec449dfeb73d7ce9c6c6'),
     ('libid3tag-0.15.1b.tar.gz', 'e5808ad997ba32c498803822078748c3'),
     ('libmad-0.15.1b.tar.gz', '1be543bc30c56fb6bea1d7bf6a64e66c'),

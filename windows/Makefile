@@ -214,9 +214,10 @@ clementine-deps: clementine-build-deps clementine-gst-plugins openssl glibnetwor
 # The actual commands for compiling each package follow
 
 .done-system:
-	if [ -d /usr/lib/gcc/i686-w64-mingw32/$(gccver)/ ]; then cp /usr/lib/gcc/i686-w64-mingw32/$(gccver)/*.dll $(prefix)/bin; fi
-	if [ -f /usr/i686-w64-mingw32/lib/libwinpthread-1.dll ]; then cp /usr/i686-w64-mingw32/lib/libwinpthread-1.dll $(prefix)/bin; fi 
-	if [ -d /usr/i686-w64-mingw32/sys-root/mingw/bin ]; then cp /usr/i686-w64-mingw32/sys-root/mingw/bin/libwinpthread-1.dll $(prefix)/bin; fi
+	mkdir -p $(prefix)/bin
+	if [ -d /usr/lib/gcc/i686-w64-mingw32/$(gccver)/ ]; then cp /usr/lib/gcc/i686-w64-mingw32/*win32/*.dll $(prefix)/bin/; fi
+	if [ -f /usr/i686-w64-mingw32/lib/libwinpthread-1.dll ]; then cp /usr/i686-w64-mingw32/lib/libwinpthread-1.dll $(prefix)/bin/; fi 
+	if [ -d /usr/i686-w64-mingw32/sys-root/mingw/bin ]; then cp /usr/i686-w64-mingw32/sys-root/mingw/bin/libwinpthread-1.dll $(prefix)/bin/; fi
 	touch $@
 
 .done-qjson: .done-qt
@@ -314,11 +315,10 @@ clementine-deps: clementine-build-deps clementine-gst-plugins openssl glibnetwor
 
 .done-sqlite:
 	$(call extractpkg,$(sqlitetgz),$(sqlite))
-	cd $(sqlite) && $(configure) --disable-static --enable-shared 
+	#cd $(sqlite) && CFLASG="-DSQLITE_ENABLE_FTS3_TOKENIZER" $(configure) --disable-static --enable-shared --enable-fts5
+	cd $(sqlite) && PKG_CONFIG_LIBDIR=$(prefix)/lib/pkgconfig LDFLAGS=-L$(prefix)/lib CFLAGS="$(cflags) -DSQLITE_ENABLE_FTS3_TOKENIZER -DSQLITE_ENABLE_FTS3_PARENTHESIS" ./configure --host=$(host) --build=$(build) --prefix=$(prefix) --disable-static --enable-shared --enable-fts5
 	cd $(sqlite) && $(make) install DESTDIR=$(stow)/$(sqlite) 
 	cp -rv $(stow)/$(sqlite)$(prefix)/* $(stow)/$(sqlite)/ && rm -rf $(stow)/$(sqlite)/target
-	cd $(sqlite) && $(cc) -shared sqlite3.c -o sqlite3.dll 
-	cd $(sqlite) && install -m755 -D sqlite3.dll $(stow)/$(sqlite)/bin/libsqlite3-0.dll
 	cd $(stow) && stow -R $(sqlite)
 	touch $@
 
@@ -457,12 +457,10 @@ clementine-deps: clementine-build-deps clementine-gst-plugins openssl glibnetwor
 	cd $(id3tag) && autoreconf -fiv
 	cd $(id3tag) && $(configure)
 	cd $(id3tag) && $(make)
-
 	# libtool is retarded and doesn't link this dll properly
 	cd $(id3tag) && /bin/bash ./libtool --mode=link $(host)-gcc \
 		-Wall -g -O2 --shared  -o libid3tag.dll -rpath /target/lib \
 		-version-info 3:0:3 *.lo -L/target/lib -lz
-
 	rm -rf $(stow)/$(id3tag)
 	cd $(id3tag) && make install DESTDIR=$(stow)/$(id3tag)
 	mv -fv $(stow)/$(id3tag)$(prefix)/* $(stow)/$(id3tag)/
@@ -485,10 +483,8 @@ clementine-deps: clementine-build-deps clementine-gst-plugins openssl glibnetwor
 	cd $(mad) && autoreconf -iv
 	cd $(mad) && $(configure) --enable-shared --disable-static --enable-experimental
 	cd $(mad) && $(make)
-
 	cd $(mad) && $(host)-gcc $(cflags) -shared .libs/*.o -o .libs/libmad.dll \
 		-Xlinker --out-implib -Xlinker .libs/libmad.dll.a
-
 	rm -rf $(stow)/$(mad)
 	cd $(mad) && make install DESTDIR=$(stow)/$(mad)
 	cp -rv $(stow)/$(mad)$(prefix)/* $(stow)/$(mad)/
@@ -610,6 +606,7 @@ clementine-deps: clementine-build-deps clementine-gst-plugins openssl glibnetwor
 .done-pthreads:
 	$(call extractpkg,$(pthreadstgz))
 	cd $(pthreads) && $(make) CROSS=$(host)- clean GC-inlined 
+	mkdir -p $(prefix)/bin
 	install -m755 $(pthreads)/pthreadGC2.dll $(prefix)/bin/pthreadGC2.dll
 	touch $@
 
@@ -745,9 +742,10 @@ clementine-deps: clementine-build-deps clementine-gst-plugins openssl glibnetwor
 
 .done-protobuf: .done-system
 	$(call extractpkg,$(protobuftgz))
-	if [ ! -f $(stow)/$(protobuf)-native/bin/protoc.exe ]; then cd $(protobuf) && ./configure --prefix=$(stow)/$(protobuf)-native && make clean && make install; fi 
+	if [ ! -f $(stow)/$(protobuf)-native/bin/protoc.exe -a "$$(uname)" != "Linux" ]; then cd $(protobuf) && ./configure --prefix=$(stow)/$(protobuf)-native && make clean && make install; fi 
 	cd $(protobuf) && make clean
-	cd $(protobuf) && $(configure) --with-protoc=$(stow)/$(protobuf)-native/bin/protoc.exe
+	if [ "$$(uname)" != "Linux" ]; then cd $(protobuf) && $(configure) --with-protoc=$(stow)/$(protobuf)-native/bin/protoc.exe; fi
+	if [ "$$(uname)" = "Linux" ]; then cd $(protobuf) && $(configure); fi
 	cd $(protobuf) && $(make)
 	$(call installpkg,$(protobuf))
 
