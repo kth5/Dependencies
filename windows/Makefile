@@ -315,7 +315,6 @@ clementine-deps: clementine-build-deps clementine-gst-plugins openssl glibnetwor
 
 .done-sqlite:
 	$(call extractpkg,$(sqlitetgz),$(sqlite))
-	#cd $(sqlite) && CFLASG="-DSQLITE_ENABLE_FTS3_TOKENIZER" $(configure) --disable-static --enable-shared --enable-fts5
 	cd $(sqlite) && PKG_CONFIG_LIBDIR=$(prefix)/lib/pkgconfig LDFLAGS=-L$(prefix)/lib CFLAGS="$(cflags) -DSQLITE_ENABLE_FTS3_TOKENIZER -DSQLITE_ENABLE_FTS3_PARENTHESIS" ./configure --host=$(host) --build=$(build) --prefix=$(prefix) --disable-static --enable-shared --enable-fts5
 	cd $(sqlite) && $(make) install DESTDIR=$(stow)/$(sqlite) 
 	cp -rv $(stow)/$(sqlite)$(prefix)/* $(stow)/$(sqlite)/ && rm -rf $(stow)/$(sqlite)/target
@@ -472,7 +471,6 @@ clementine-deps: clementine-build-deps clementine-gst-plugins openssl glibnetwor
 
 .done-mad: .done-id3tag
 	$(call extractpkg,$(madtgz))
-	#cd $(mad) && patch -Np0 -i ../patches/libmad-01-force-mem.patch
 	cd $(mad) && patch -Np0 -i ../patches/libmad-02-remove-cygwin-bits.patch
 	cd $(mad) && patch -Np1 -i ../patches/libmad-03-config.patch
 	cd $(mad) && patch -Np1 -i ../patches/libmad-04-no-undefined.mingw.patch
@@ -488,7 +486,6 @@ clementine-deps: clementine-build-deps clementine-gst-plugins openssl glibnetwor
 	rm -rf $(stow)/$(mad)
 	cd $(mad) && make install DESTDIR=$(stow)/$(mad)
 	cp -rv $(stow)/$(mad)$(prefix)/* $(stow)/$(mad)/
-	#cp $(mad)/libmad.dll.exe $(stow)/$(mad)/bin/libmad.dll
 	cd $(stow) && stow -R $(mad)
 	touch $@
 
@@ -497,10 +494,6 @@ clementine-deps: clementine-build-deps clementine-gst-plugins openssl glibnetwor
 	cd $(lame) && patch -Np0 -i ../patches/lame-01-disable-sse.patch
 	cd $(lame) && autoconf
 	cd $(lame) && $(configure) --disable-frontend --disable-cpml
-	#cd $(lame) && $(make) -f Makefile.unix UNAME='MSDOS' NOUNIXCMD=NO HAVE_NASM=NO \
-	#	CC_OPTS="-I$(prefix)/include -Wall -pipe -O3 -march=pentium -march=pentium -mfancy-math-387" \
-	#	CC=i686-w64-mingw32-gcc DESTDIR=$(prefix) install
-	#touch $@
 	$(call installpkg,$(lame))
 
 .done-gst-plugins-bad: .done-gstreamer .done-gst-plugins-base .done-faad .done-faac .done-libmms .done-oil .done-libmpcdec .done-opus
@@ -633,9 +626,6 @@ clementine-deps: clementine-build-deps clementine-gst-plugins openssl glibnetwor
 	patch -d $(qt) -p1 < patches/qt-07-webkit-widgets.patch
 	patch -d $(qt) -p2 < patches/qt-09-cygwin-mkspecs.patch
 	patch -d $(qt) -p1 < patches/qt-4.8.0-build-qtuitools-dynamically.patch 
-	#patch -d $(qt) -p1 < patches/qt4-use-correct-pkg-config-static-flags.patch 
-	#patch -d $(qt) -p0 < patches/qt-dont-perform-ipc-checks-for-win32.patch 
-	#patch -d $(qt) -p1 < patches/qt-dont-set-qt-dll-define-for-static-builds.patch 
 	patch -d $(qt) -p2 < patches/4.8.5-qmake-implib.patch
 	patch -d $(qt) -p1 < patches/qt-fix-javascript-jit-on-mingw-x86_64.patch 
 	patch -d $(qt) -p2 < patches/4.8.7-cygwin-posix.patch
