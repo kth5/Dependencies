@@ -1,0 +1,17 @@
+diff -ruN libmtp-1.1.12.orig/src/libusb-glue.h libmtp-1.1.12/src/libusb-glue.h
+--- libmtp-1.1.12.orig/src/libusb-glue.h	2016-09-30 12:20:20.000000000 +0800
++++ libmtp-1.1.12/src/libusb-glue.h	2016-09-30 12:22:18.000000000 +0800
+@@ -48,6 +48,13 @@
+ extern "C" {
+ #endif /* __cplusplus */
+ 
++/* Portability fixes */
++#ifdef __APPLE__ 
++#define LIBUSB_CLASS_APPLICATION 0xfe
++#define libusb_handle_events_timeout_completed(ctx, tv, c) \
++       libusb_handle_events_timeout(ctx, tv)
++#endif
++
+ /**
+  * Debug macro
+  */

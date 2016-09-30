@@ -263,7 +263,8 @@ clementine-deps: clementine-build-deps clementine-gst-plugins
 
 .done-libmtp: .done-usb
 	$(call extractpkg,$(mtptgz))
-	cd $(mtp) && $(configure) --disable-mtpz
+	cd $(mtp) && patch -Np1 -i ../patches/libmtp-01-libusb.patch
+	cd $(mtp) && LIBUSB_CFLAGS="-I$(prefix)/include/libusb-1.0" LIBUSB_LIBS="-L$(prefix)/lib -lusb-1.0" $(configure) --disable-mtpz --disable-static --enable-shared
 	cd $(mtp) && $(make)
 	$(call installpkg,$(mtp))
 
@@ -353,8 +354,7 @@ clementine-deps: clementine-build-deps clementine-gst-plugins
 	$(call extractpkg,$(qttgz))
 	patch -d $(qt) -p1 -R < patches/qt-01-mousebuttons.patch
 	patch -d $(qt) -p1 < patches/qt-03-elcapitan.patch
-	#cd $(qt) && OPENSSL_LIBS="-L$(prefix)/lib -lssl -lcrypto" ./configure
-	cd $(qt) && ./configure \
+	cd $(qt) && OPENSSL_LIBS="-L$(prefix)/lib -lssl -lcrypto" ./configure \
 		-release \
 		-opensource -confirm-license \
 		-prefix $(stow)/$(qt) \
