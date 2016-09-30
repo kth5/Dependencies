@@ -112,7 +112,13 @@ clementine-deps: clementine-build-deps clementine-gst-plugins
 	cd $(fftw) && $(make)
 	$(call installpkg,$(fftw))
 
-.done-libplist: .done-glib
+.done-libxml:
+	$(call extractpkg,$(xmltgz))
+	cd $(xml) && $(configure) --without-python
+	cd $(xml) && $(make)
+	$(call installpkg,$(xml))
+
+.done-libplist: .done-glib .done-libxml
 	$(call extractpkg,$(plisttgz))
 	cd $(plist) && $(configure) --without-cython
 	cd $(plist) && $(slowmake)
