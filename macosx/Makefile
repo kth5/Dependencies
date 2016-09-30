@@ -1,5 +1,5 @@
 # How many source files to build in parallel within each package
-jobs=-j4
+jobs=-j2
 
 # Source and binary directories
 src=/src
@@ -84,20 +84,24 @@ clementine-deps: clementine-build-deps clementine-gst-plugins
 
 .done-gettext:
 	$(call extractpkg,$(gettexttgz))
-	#cd $(gettext) && patch -p0 < ../patches/gettext-02-examples.patch
 	cd $(gettext) && $(configure) --without-git --disable-java
-	$(call buildpkg,$(gettext))
 	$(call installpkg,$(gettext))
 
-.done-glib: .done-gettext  .done-ffi
+.done-pcre:
+	$(call extractpkg,$(pcretgz))
+	cd $(pcre) && $(configure) --enable-utf8 --enable-unicode-properties --enable-pcre8 --enable-pcre16 --enable-pcre32
+	$(call installpkg,$(pcre))
+
+.done-glib: .done-gettext .done-ffi .done-pcre
 	$(call extractpkg,$(glibtgz))
 	cd $(glib) && $(configure) --with-libiconv=native
 	cd $(glib) && $(make)
-	rm -fv
 	$(call installpkg,$(glib))
 
 .done-ffi:
-	$(call extractandbuild,$(ffitgz),$(ffi))
+	$(call extractpkg,$(ffitgz))
+	cd $(ffi) && $(configure)
+	$(call installpkg,$(ffi))
 
 .done-fftw:
 	$(call extractpkg,$(fftwtgz))
