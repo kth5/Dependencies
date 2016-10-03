@@ -422,7 +422,7 @@ clementine-deps: clementine-build-deps clementine-gst-plugins openssl glibnetwor
 
 .done-speex: .done-ogg
 	$(call extractpkg,$(speextgz))
-	cd $(speex) && $(configure)
+	cd $(speex) && $(configure) --disable-binaries
 	cd $(speex) && $(make)
 
 	rm -rf $(stow)/$(speex)
